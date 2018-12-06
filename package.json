@@ -1,0 +1,22 @@
+{
+  "name": "arbitrage",
+  "version": "1.0.0",
+  "description": "Binance arbitrage app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SirSagramor/arbitrage.git"
+  },
+  "author": "SirSagramor, vovaparkhomchuk",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SirSagramor/arbitrage/issues"
+  },
+  "homepage": "https://github.com/SirSagramor/arbitrage#readme",
+  "devDependencies": {
+    "eslint": "^5.9.0"
+  }
+}
