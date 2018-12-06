@@ -1,9 +1,85 @@
 'use strict';
 
-const binance = require('node-binance-api')();
+const Binance = require('node-binance-api');
 const mysql = require('mysql');
-const coins = ['XRPBTC', 'XRPETH', 'ETHBTC'];
-const quantity = 1;
+
+const coins = [
+  ['XRPBTC', 'XRPETH', 'ETHBTC', 1, 0.02],
+  ['EOSBTC', 'EOSETH', 'ETHBTC', 1, 0.02]
+];
+
+const arbitrageStraight = (prices, pairs) => {
+  const quantity = pairs[3];
+  const ask1 = prices[pairs[0]][0];
+  const bid1 = prices[pairs[0]][1];
+  const bid2 = prices[pairs[1]][1];
+  const bid3 = prices[pairs[2]][1];
+  const volAsk1 = prices[pairs[0]][2];
+  const volBid2 = prices[pairs[1]][3];
+  const volBid3 = prices[pairs[2]][3];
+
+  const xrpQuant = quantity / ask1;
+  const ethQuant = xrpQuant * bid2;
+  const btcQuant = ethQuant * bid3;
+  const profit = ((btcQuant - quantity) / quantity)  * 100;
+  console.log(pairs.toString() + ' ' + profit);
+  return {
+    'arb_pair': pairs[2].substr(0, 3),
+    'arb_asset': pairs[0].substr(0, 3),
+    'order1_price': ask1,
+    'order1_volume': volAsk1,
+    'order1_volume_btc': ask1 * volAsk1,
+    'order2_price': bid2,
+    'order2_volume': volBid2,
+    'order2_volume_btc': volBid2 * bid1,
+    'order3_price': bid3,
+    'order3_volume': volBid3,
+    'order3_volume_btc': volBid3 * bid3,
+    'pattern_type': 1,
+    'timestamp': Math.floor(Date.now() / 1000),
+    profit,
+  };
+};
+
+const arbitrageBackward = (prices, pairs) => {
+  const quantity = pairs[3];
+  const ask2 = prices[pairs[1]][0];
+  const ask3 = prices[pairs[2]][0];
+  const bid1 = prices[pairs[0]][1];
+  const volAsk2 = prices[pairs[1]][2];
+  const volAsk3 = prices[pairs[2]][2];
+  const volBid1 = prices[pairs[0]][3];
+
+  const ethQuant = quantity / ask3;
+  const xrpQuant = ethQuant / ask2;
+  const btcQuant = xrpQuant * bid1;
+  const profit = ((btcQuant - quantity) / quantity)  * 100;
+  console.log(pairs.toString() + ' ' + profit);
+  return {
+    'arb_pair': pairs[2].substr(0, 3),
+    'arb_asset': pairs[0].substr(0, 3),
+    'order1_price': ask3,
+    'order1_volume': volAsk3,
+    'order1_volume_btc': ask3 * volAsk3,
+    'order2_price': ask2,
+    'order2_volume': volAsk2,
+    'order2_volume_btc': volAsk2 * bid1,
+    'order3_price': bid1,
+    'order3_volume': volBid1,
+    'order3_volume_btc': bid1 * volBid1,
+    'pattern_type': 2,
+    'timestamp': Math.floor(Date.now() / 1000),
+    profit
+  };
+};
+
+const allIsReady = last => {
+  for (const i in last) {
+    if (last[i][0] === undefined || last[i][1] === undefined)
+      return false;
+  }
+  return true;
+};
 
 const connection = mysql.createConnection({
   host: 'goodmusi.mysql.tools',
@@ -15,123 +91,63 @@ const connection = mysql.createConnection({
 connection.connect(err => {
   if (err) {
     console.error('error connecting: ' + err.stack);
-    return;
+    throw err;
   }
-  console.log('connected as id ' + connection.threadId);
+  console.log('Connected to database as id: ' + connection.threadId);
 });
 
-
-const arbitrageXRP = last => {
-  const xrpQuant = quantity / last['XRPBTC'][0];
-  const ethQuant = xrpQuant * last['XRPETH'][1];
-  const btcQuant = ethQuant * last['ETHBTC'][1];
-  const profit = ((btcQuant - quantity) / quantity)  * 100;
-  console.log(profit);
-  return {
-    'order1_price': last['XRPBTC'][0],
-    'order1_volume': last['XRPBTC'][2],
-    'order1_volume_btc': last['XRPBTC'][0] * last['XRPBTC'][2],
-    'order2_price': last['XRPETH'][1],
-    'order2_volume': last['XRPETH'][3],
-    'order2_volume_btc': last['XRPETH'][3] * last['XRPBTC'][1],
-    'order3_price': last['ETHBTC'][1],
-    'order3_volume': last['ETHBTC'][3],
-    'order3_volume_btc': last['ETHBTC'][3] * last['ETHBTC'][1],
-    'pattern_type': 1,
-    profit
-  };
+const sendRes = (data) => {
+  connection.query('INSERT INTO binance_arbitrage_test SET ?', data, error => {
+    if (error) throw error;
+  });
 };
 
-const arbitrageETH = last => {
-  const ethQuant = quantity / last['ETHBTC'][0];
-  const xrpQuant = ethQuant / last['XRPETH'][0];
-  const btcQuant = xrpQuant * last['XRPBTC'][1];
-  const profit = ((btcQuant - quantity) / quantity)  * 100;
-  console.log(profit);
-  return {
-    'order1_price': last['ETHBTC'][0],
-    'order1_volume': last['ETHBTC'][2],
-    'order1_volume_btc': last['ETHBTC'][0] * last['ETHBTC'][2],
-    'order2_price': last['XRPETH'][0],
-    'order2_volume': last['XRPETH'][2],
-    'order2_volume_btc': last['XRPETH'][2] * last['XRPBTC'][1],
-    'order3_price': last['XRPBTC'][1],
-    'order3_volume': last['XRPBTC'][3],
-    'order3_volume_btc': last['XRPBTC'][1] * last['XRPBTC'][3],
-    'pattern_type': 2,
-    profit
-  };
-};
-
-const allNotUndef = last => {
-  for (const i in last) {
-    if (last[i][0] === undefined || last[i][1] === undefined)
-      return false;
-  }
-  return true;
-};
-
-binance.websockets.depth(coins, (() => {
+const callback = (pairs) => {
   const last = {};
-  for (const i in coins) last[coins[i]] = [];
+  for (const i in pairs.slice(0, 3))
+    last[pairs[i]] = [];
   return depth => {
     const symbol = depth.s;
     let ask, bid, volAsk, volBid;
-    if (depth.a[0] === undefined) {
-      ask = last[symbol][0];
-      volAsk = last[symbol][2];
-    } else {
+    if (depth.a[0] !== undefined) {
       ask = parseFloat(depth.a[0][0]);
       volAsk = parseFloat(depth.a[0][1]);
-    }
-
-    if (depth.b[0] === undefined) {
-      bid = last[symbol][1];
-      volBid = last[symbol][3];
     } else {
+      ask = last[symbol][0];
+      volAsk = last[symbol][2];
+    }
+    if (depth.b[0] !== undefined) {
       bid = parseFloat(depth.b[0][0]);
       volBid = parseFloat(depth.b[0][1]);
+    } else {
+      bid = last[symbol][1];
+      volBid = last[symbol][3];
     }
     last[symbol] = [ask, bid, volAsk, volBid];
+    if (!allIsReady(last)) return;
 
-    if (!allNotUndef(last)) return;
-
-    const xrp = arbitrageXRP(last);
-    const eth = arbitrageETH(last);
-    if (xrp['profit'] >= 0.01) {
-      connection.query(`INSERT INTO binance_arbitrage_test 
-      (\`arb_pair\`, \`arb_asset\`, \`order1_price\`, \`order1_volume\`, 
-      \`order1_volume_btc\`, \`order2_price\`, \`order2_volume\`, 
-      \`order2_volume_btc\`, \`order3_price\`, \`order3_volume\`, 
-      \`order3_volume_btc\`, \`pattern_type\`, \`profit\`, 
-      \`timestamp\`)
-      VALUES ('ETH', 'XRP', 
-      ${xrp['order1_price']}, ${xrp['order1_volume']}, ${xrp['order1_volume_btc']}, 
-      ${xrp['order2_price']}, ${xrp['order2_volume']}, ${xrp['order2_volume_btc']}, 
-      ${xrp['order3_price']}, ${xrp['order3_volume']}, ${xrp['order3_volume_btc']}, 
-      ${xrp['pattern_type']}, ${xrp['profit']}, ${Math.floor(Date.now() / 1000)})`,
-      (error) => {
-        if (error) throw error;
-      });
+    const straight = arbitrageStraight(last, pairs);
+    const backward = arbitrageBackward(last, pairs);
+    if (straight['profit'] >= pairs[4]) {
+      const msg = '-----WOW WRITING NOW TO DATABASE----- ';
+      console.log(msg + straight['profit'] + pairs.toString());
+      sendRes(straight);
     }
-
-    if (eth['profit'] >= 0.01) {
-      connection.query(`INSERT INTO binance_arbitrage_test 
-      (\`arb_pair\`, \`arb_asset\`, \`order1_price\`, \`order1_volume\`, 
-      \`order1_volume_btc\`, \`order2_price\`, \`order2_volume\`, 
-      \`order2_volume_btc\`, \`order3_price\`, \`order3_volume\`, 
-      \`order3_volume_btc\`, \`pattern_type\`, \`profit\`, 
-      \`timestamp\`)
-      VALUES ('ETH', 'XRP', 
-      ${eth['order1_price']}, ${eth['order1_volume']}, ${eth['order1_volume_btc']}, 
-      ${eth['order2_price']}, ${eth['order2_volume']}, ${eth['order2_volume_btc']}, 
-      ${eth['order3_price']}, ${eth['order3_volume']}, ${eth['order3_volume_btc']}, 
-      ${eth['pattern_type']}, ${eth['profit']}, ${Math.floor(Date.now() / 1000)})`,
-        (error) => {
-          if (error) throw error;
-        });
+    if (backward['profit'] >= pairs[4]) {
+      const msg = '-----WOW WRITING NOW TO DATABASE----- ';
+      console.log(msg + straight['profit'] + pairs.toString());
+      sendRes(backward);
     }
-
   };
+};
+
+// Start sockets
+const sockets = [];
+for (let i = 0; i < coins.length; i++) {
+  const newSocket = new Binance();
+  const pairs = [coins[i][0], coins[i][1], coins[i][2]];
+  newSocket.websockets.depth(pairs, callback(coins[i]));
+  sockets.push(newSocket);
 }
-)());
+
+
