@@ -98,7 +98,7 @@ binance.websockets.depth(coins, (() => {
 
     const xrp = arbitrageXRP(last);
     const eth = arbitrageETH(last);
-    if (xrp['profit'] >= 0.01) {
+    if (xrp['profit'] >= 0.2) {
       connection.query(`INSERT INTO binance_arbitrage_test 
       (\`arb_pair\`, \`arb_asset\`, \`order1_price\`, \`order1_volume\`, 
       \`order1_volume_btc\`, \`order2_price\`, \`order2_volume\`, 
@@ -115,7 +115,7 @@ binance.websockets.depth(coins, (() => {
       });
     }
 
-    if (eth['profit'] >= 0.01) {
+    if (eth['profit'] >= 0.2) {
       connection.query(`INSERT INTO binance_arbitrage_test 
       (\`arb_pair\`, \`arb_asset\`, \`order1_price\`, \`order1_volume\`, 
       \`order1_volume_btc\`, \`order2_price\`, \`order2_volume\`, 
