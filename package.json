@@ -18,5 +18,8 @@
   "homepage": "https://github.com/SirSagramor/arbitrage#readme",
   "devDependencies": {
     "eslint": "^5.9.0"
+  },
+  "dependencies": {
+    "node-binance-api": "^0.8.7"
   }
 }
