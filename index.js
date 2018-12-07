@@ -4,9 +4,10 @@ const Binance = require('node-binance-api');
 const mysql = require('mysql');
 
 const coins = [
-  ['XRPBTC', 'XRPETH', 'ETHBTC', 1, 0.02],
-  ['EOSBTC', 'EOSETH', 'ETHBTC', 1, 0.02]
+  ['ETH', 'XRP', 1, 0.3],
+  ['ETH', 'EOS', 1, 0.3]
 ];
+const sockets = [];
 
 const arbitrageStraight = (prices, pairs) => {
   const quantity = pairs[3];
@@ -102,29 +103,27 @@ const sendRes = (data) => {
   });
 };
 
-const callback = (pairs) => {
+const callback = (pairs, pos) => {
   const last = {};
   for (const i in pairs.slice(0, 3))
     last[pairs[i]] = [];
-  return depth => {
-    const symbol = depth.s;
-    let ask, bid, volAsk, volBid;
-    if (depth.a[0] !== undefined) {
-      ask = parseFloat(depth.a[0][0]);
-      volAsk = parseFloat(depth.a[0][1]);
-    } else {
-      ask = last[symbol][0];
-      volAsk = last[symbol][2];
-    }
-    if (depth.b[0] !== undefined) {
-      bid = parseFloat(depth.b[0][0]);
-      volBid = parseFloat(depth.b[0][1]);
-    } else {
-      bid = last[symbol][1];
-      volBid = last[symbol][3];
+  return (symbol, depth) => {
+
+    const bids = sockets[pos].sortBids(depth.bids);
+    const asks = sockets[pos].sortAsks(depth.asks);
+    const ask = sockets[pos].first(asks);
+    const volAsk = asks[ask];
+    const bid = sockets[pos].first(bids);
+    const volBid = bids[bid];
+
+    if (last[symbol] !== [] &&
+          last[symbol][0] === ask && last[symbol][1] === bid) {
+      last[symbol] = [ask, bid, volAsk, volBid];
+      return;
     }
     last[symbol] = [ask, bid, volAsk, volBid];
-    if (!allIsReady(last)) return;
+    if (!allIsReady(last))
+      return;
 
     const straight = arbitrageStraight(last, pairs);
     const backward = arbitrageBackward(last, pairs);
@@ -142,11 +141,15 @@ const callback = (pairs) => {
 };
 
 // Start sockets
-const sockets = [];
+
 for (let i = 0; i < coins.length; i++) {
   const newSocket = new Binance();
-  const pairs = [coins[i][0], coins[i][1], coins[i][2]];
-  newSocket.websockets.depth(pairs, callback(coins[i]));
+  const first = coins[i][1] + 'BTC';
+  const second = coins[i][1] + coins[i][0];
+  const third = coins[i][0] + 'BTC';
+  const pairs = [first, second, third];
+  const pairsData = [first, second, third, coins[i][2], coins[i][3]];
+  newSocket.websockets.depthCache(pairs, callback(pairsData, i));
   sockets.push(newSocket);
 }
 
