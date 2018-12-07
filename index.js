@@ -4,8 +4,24 @@ const Binance = require('node-binance-api');
 const mysql = require('mysql');
 
 const coins = [
-  ['ETH', 'XRP', 1, 0.3],
-  ['ETH', 'EOS', 1, 0.3]
+  ['ETH', 'XRP', 1, 0.5],
+  ['ETH', 'EOS', 1, 0.5],
+  ['ETH', 'QKC', 1, 0.5],
+  ['ETH', 'EDO', 1, 0.5],
+  ['ETH', 'ADA', 1, 0.5],
+  ['ETH', 'ZRX', 1, 0.5],
+  ['ETH', 'PPT', 1, 0.5],
+  ['ETH', 'NEO', 1, 0.5],
+  ['ETH', 'HOT', 1, 0.5],
+  ['ETH', 'ICX', 1, 0.5],
+  ['ETH', 'POWR', 1, 0.5],
+  ['ETH', 'STRAT', 1, 0.5],
+  ['ETH', 'WAVES', 1, 0.5],
+  ['ETH', 'AION', 1, 0.5],
+  ['ETH', 'ARK', 1, 0.5],
+  ['ETH', 'BQX', 1, 0.5],
+  ['ETH', 'DASH', 1, 0.5],
+  ['ETH', 'ELF', 1, 0.5],
 ];
 const sockets = [];
 
