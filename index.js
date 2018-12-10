@@ -145,7 +145,6 @@ const callback = (pairs, pos) => {
 
     const straight = arbitrageStraight(last, pairs);
     const backward = arbitrageBackward(last, pairs);
-    console.log({ straight, backward });
     if (straight['profit'] >= pairs[4]) {
       const msg = '-----WOW WRITING NOW TO DATABASE----- ';
       console.log(msg + straight['profit'] + pairs.toString());
