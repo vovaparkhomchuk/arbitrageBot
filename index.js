@@ -3,6 +3,8 @@
 const Binance = require('node-binance-api');
 const mysql = require('mysql');
 
+
+const mainCoin = 'BTC';
 const coins = [
   ['ETH', 'XRP', 1, 0.5],
   ['ETH', 'EOS', 1, 0.5],
@@ -41,8 +43,8 @@ const arbitrageStraight = (prices, pairs) => {
   const profit = ((btcQuant - quantity) / quantity)  * 100;
   console.log(pairs.toString() + ' ' + profit);
   return {
-    'arb_pair': pairs[2].substr(0, 3),
-    'arb_asset': pairs[0].substr(0, 3),
+    'arb_pair': pairs[2].slice(0, -mainCoin.length),
+    'arb_asset': pairs[0].slice(0, -mainCoin.length),
     'order1_price': ask1,
     'order1_volume': volAsk1,
     'order1_volume_btc': ask1 * volAsk1,
@@ -73,8 +75,8 @@ const arbitrageBackward = (prices, pairs) => {
   const profit = ((btcQuant - quantity) / quantity)  * 100;
   console.log(pairs.toString() + ' ' + profit);
   return {
-    'arb_pair': pairs[2].substr(0, 3),
-    'arb_asset': pairs[0].substr(0, 3),
+    'arb_pair': pairs[2].slice(0, -mainCoin.length),
+    'arb_asset': pairs[0].slice(0, -mainCoin.length),
     'order1_price': ask3,
     'order1_volume': volAsk3,
     'order1_volume_btc': ask3 * volAsk3,
@@ -143,6 +145,7 @@ const callback = (pairs, pos) => {
 
     const straight = arbitrageStraight(last, pairs);
     const backward = arbitrageBackward(last, pairs);
+    console.log({ straight, backward });
     if (straight['profit'] >= pairs[4]) {
       const msg = '-----WOW WRITING NOW TO DATABASE----- ';
       console.log(msg + straight['profit'] + pairs.toString());
@@ -160,9 +163,9 @@ const callback = (pairs, pos) => {
 
 for (let i = 0; i < coins.length; i++) {
   const newSocket = new Binance();
-  const first = coins[i][1] + 'BTC';
+  const first = coins[i][1] + mainCoin;
   const second = coins[i][1] + coins[i][0];
-  const third = coins[i][0] + 'BTC';
+  const third = coins[i][0] + mainCoin;
   const pairs = [first, second, third];
   const pairsData = [first, second, third, coins[i][2], coins[i][3]];
   newSocket.websockets.depthCache(pairs, callback(pairsData, i));
