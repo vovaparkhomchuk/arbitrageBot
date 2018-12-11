@@ -55,7 +55,6 @@ const arbitrageStraight = (prices, pairs) => {
       sumAmount += asks1[key];
     }
   }
-
   // second step
   let assetAmount = 0, amountETH = 0, fakeAmountETH = 0, avgPrice2 = null;
   for (const key in bids2) {
@@ -102,6 +101,7 @@ const arbitrageStraight = (prices, pairs) => {
     amountBTC2 += key * bids3[key];
     assetAmount3 += bids3[key];
   }
+  console.log('\n')
 
 
   const profit = ((amountBTC - quantity) / quantity)  * 100;
@@ -217,7 +217,7 @@ const arbitrageStraight = (prices, pairs) => {
 
 const allIsReady = last => {
   for (const i in last) {
-    if (last[i][0] === undefined || last[i][1] === undefined)
+    if (last[i]['asks'] === {} || last[i]['bids'] === {})
       return false;
   }
   return true;
@@ -257,9 +257,9 @@ const callback = (pairs, pos) => {
     };
   return (symbol, depth) => {
 
+
     const bids = sockets[pos].sortBids(depth.bids);
     const asks = sockets[pos].sortAsks(depth.asks);
-
     if (equalObject(asks, last[symbol]['asks']) && equalObject(bids, last[symbol]['bids'])) return;
     last[symbol] = { asks, bids };
     if (!allIsReady(last))
