@@ -59,13 +59,15 @@ const arbitrageStraight = (prices, pairs) => {
   }
 
   // second step
-  let assetAmount = 0, amountETH = 0, fakeAmountETH = 0;
+  let assetAmount = 0, amountETH = 0, fakeAmountETH = 0, avgPrice2 = null;
   for (const key in bids2) {
     if (assetAmount + bids2[key] >= assetVol) {
       const lambda = assetVol - assetAmount;
       fakeAmountETH = amountETH;
       fakeAmountETH += key * bids2[key];
       amountETH += key * lambda;
+      avgPrice2 = amountETH / assetVol;
+      console.log('Avg Price: ' + avgPrice2);
       console.log('ETH amount: ' + amountETH);
       console.log('Fake ETH amount: ' + fakeAmountETH);
       break;
@@ -75,13 +77,15 @@ const arbitrageStraight = (prices, pairs) => {
   }
 
   // third step
-  let assetAmount2 = 0, amountBTC = 0, fakeAmountBTC = 0;
+  let assetAmount2 = 0, amountBTC = 0, fakeAmountBTC = 0, avgPrice3 = null;
   for (const key in bids3) {
     if (assetAmount2 + bids3[key] >= amountETH) {
       const lambda = amountETH - assetAmount2;
       fakeAmountBTC = amountBTC;
       fakeAmountBTC += key * bids3[key];
       amountBTC += key * lambda;
+      avgPrice3 = amountBTC / amountETH;
+      console.log('Avg price' + avgPrice3);
       console.log('BTC amount: ' + amountBTC);
       console.log('Fake BTC amount: ' + fakeAmountBTC);
       break;
@@ -89,33 +93,44 @@ const arbitrageStraight = (prices, pairs) => {
     amountBTC += key * bids3[key];
     assetAmount2 += bids3[key];
   }
+  let assetAmount3 = 0, amountBTC2 = 0;
+  for (const key in bids3) {
+    if (assetAmount3 + bids3[key] >= fakeAmountETH) {
+      const lambda = fakeAmountETH - assetAmount3;
+      amountBTC2 += key * lambda;
+      console.log('BTC amount: ' + amountBTC2);
+      break;
+    }
+    amountBTC2 += key * bids3[key];
+    assetAmount3 += bids3[key];
+  }
 
 
-  const ask1 = prices[pairs[0]][0];
-  const bid1 = prices[pairs[0]][1];
-  const bid2 = prices[pairs[1]][1];
-  const bid3 = prices[pairs[2]][1];
-  const volAsk1 = prices[pairs[0]][2];
-  const volBid2 = prices[pairs[1]][3];
-  const volBid3 = prices[pairs[2]][3];
-
-  const xrpQuant = quantity / ask1;
-  const ethQuant = xrpQuant * bid2;
-  const btcQuant = ethQuant * bid3;
-  const profit = ((btcQuant - quantity) / quantity)  * 100;
+  // const ask1 = prices[pairs[0]][0];
+  // const bid1 = prices[pairs[0]][1];
+  // const bid2 = prices[pairs[1]][1];
+  // const bid3 = prices[pairs[2]][1];
+  // const volAsk1 = prices[pairs[0]][2];
+  // const volBid2 = prices[pairs[1]][3];
+  // const volBid3 = prices[pairs[2]][3];
+  //
+  // const xrpQuant = quantity / ask1;
+  // const ethQuant = xrpQuant * bid2;
+  // const btcQuant = ethQuant * bid3;
+  const profit = ((amountBTC - quantity) / quantity)  * 100;
   console.log(pairs.toString() + ' ' + profit);
   return {
     'arb_pair': pairs[2].slice(0, -mainCoin.length),
     'arb_asset': pairs[0].slice(0, -mainCoin.length),
-    'order1_price': ask1,
-    'order1_volume': volAsk1,
-    'order1_volume_btc': ask1 * volAsk1,
-    'order2_price': bid2,
-    'order2_volume': volBid2,
-    'order2_volume_btc': volBid2 * bid1,
-    'order3_price': bid3,
-    'order3_volume': volBid3,
-    'order3_volume_btc': volBid3 * bid3,
+    'order1_price': avgPrice,
+    'order1_volume': sumAmount,
+    'order1_volume_btc': volBTC,
+    'order2_price': avgPrice2,
+    'order2_volume': fakeAmountETH,
+    'order2_volume_btc': amountBTC2,
+    'order3_price': avgPrice3,
+    'order3_volume': fakeAmountBTC,
+    'order3_volume_btc': fakeAmountBTC * avgPrice3,
     'pattern_type': 1,
     'timestamp': Math.floor(Date.now() / 1000),
     profit,
@@ -206,16 +221,17 @@ const callback = (pairs, pos) => {
 
     const straight = arbitrageStraight(last, pairs);
     const backward = arbitrageBackward(last, pairs);
-    if (straight['profit'] >= pairs[4]) {
-      const msg = '-----WOW WRITING NOW TO DATABASE----- ';
-      console.log(msg + straight['profit'] + pairs.toString());
-      sendRes(straight);
-    }
-    if (backward['profit'] >= pairs[4]) {
-      const msg = '-----WOW WRITING NOW TO DATABASE----- ';
-      console.log(msg + straight['profit'] + pairs.toString());
-      sendRes(backward);
-    }
+    console.log('STRAIGHT: ' + straight);
+    // if (straight['profit'] >= pairs[4]) {
+    //   const msg = '-----WOW WRITING NOW TO DATABASE----- ';
+    //   console.log(msg + straight['profit'] + pairs.toString());
+    //   sendRes(straight);
+    // }
+    // if (backward['profit'] >= pairs[4]) {
+    //   const msg = '-----WOW WRITING NOW TO DATABASE----- ';
+    //   console.log(msg + straight['profit'] + pairs.toString());
+    //   sendRes(backward);
+    // }
   };
 };
 
