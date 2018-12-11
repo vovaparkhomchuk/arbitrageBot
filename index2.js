@@ -29,6 +29,49 @@ const sockets = [];
 
 const arbitrageStraight = (prices, pairs) => {
   const quantity = pairs[3];
+  const asks1 = prices[pairs[0]]['asks'];
+  const asks2 = prices[pairs[1]]['asks'];
+  const asks3 = prices[pairs[2]]['asks'];
+  const bids1 = prices[pairs[0]]['bids'];
+  const bids2 = prices[pairs[1]]['bids'];
+  const bids3 = prices[pairs[2]]['bids'];
+
+  // first step
+  let sum = 0, sumAmount = 0, assetVol = null, avgPrice = null;
+  for (const key in asks1) {
+    const tempMainCoinVol = key * asks1[key];
+    if (tempMainCoinVol + sum > quantity) {
+      const lambda = quantity - sum;
+      const temp = lambda / key;
+      assetVol = sumAmount + temp;
+      sumAmount += asks1[key];
+      avgPrice = 1 / (assetVol / quantity);
+      const volBTC = sumAmount * avgPrice;
+      console.log('AvgPrice: ' + avgPrice);
+      console.log('XRP_vol_btc: ' + volBTC);
+      console.log('XRP_volume: ' + sumAmount);
+      console.log('Реальное количество XRP: ' + assetVol);
+      break;
+    } else {
+      sum += tempMainCoinVol;
+      sumAmount += asks1[key];
+    }
+  }
+
+  // second step
+  let amountETH = 0;
+  let price = 0;
+  for (const key in bids2) {
+    if (amountETH + bids2[key] >= assetVol) {
+      const lambda = assetVol - amountETH;
+      price += key * lambda;
+      break;
+    }
+    price += key * bids2[key];
+    amountETH += bids2[key];
+  }
+
+
   const ask1 = prices[pairs[0]][0];
   const bid1 = prices[pairs[0]][1];
   const bid2 = prices[pairs[1]][1];
@@ -121,25 +164,24 @@ const sendRes = (data) => {
   });
 };
 
+const equalObject = (obj1, obj2) => JSON.stringify(obj1) === JSON.stringify(obj2);
+
+
+
 const callback = (pairs, pos) => {
   const last = {};
   for (const i in pairs.slice(0, 3))
-    last[pairs[i]] = [];
+    last[pairs[i]] = {
+      'asks': {},
+      'bids': {}
+    };
   return (symbol, depth) => {
 
     const bids = sockets[pos].sortBids(depth.bids);
     const asks = sockets[pos].sortAsks(depth.asks);
-    const ask = sockets[pos].first(asks);
-    const volAsk = asks[ask];
-    const bid = sockets[pos].first(bids);
-    const volBid = bids[bid];
 
-    if (last[symbol] !== [] &&
-          last[symbol][0] === ask && last[symbol][1] === bid) {
-      last[symbol] = [ask, bid, volAsk, volBid];
-      return;
-    }
-    last[symbol] = [ask, bid, volAsk, volBid];
+    if (equalObject(asks, last[symbol]['asks']) && equalObject(bids, last[symbol]['bids'])) return;
+    last[symbol] = { asks, bids };
     if (!allIsReady(last))
       return;
 
