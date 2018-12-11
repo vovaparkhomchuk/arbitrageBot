@@ -6,38 +6,36 @@ const mysql = require('mysql');
 
 const mainCoin = 'BTC';
 const coins = [
-  ['ETH', 'XRP', 1, 0.5],
-  ['ETH', 'EOS', 1, 0.5],
-  ['ETH', 'QKC', 1, 0.5],
-  ['ETH', 'EDO', 1, 0.5],
-  ['ETH', 'ADA', 1, 0.5],
-  ['ETH', 'ZRX', 1, 0.5],
-  ['ETH', 'PPT', 1, 0.5],
-  ['ETH', 'NEO', 1, 0.5],
-  ['ETH', 'HOT', 1, 0.5],
-  ['ETH', 'ICX', 1, 0.5],
-  ['ETH', 'POWR', 1, 0.5],
-  ['ETH', 'STRAT', 1, 0.5],
-  ['ETH', 'WAVES', 1, 0.5],
-  ['ETH', 'AION', 1, 0.5],
-  ['ETH', 'ARK', 1, 0.5],
-  ['ETH', 'BQX', 1, 0.5],
-  ['ETH', 'DASH', 1, 0.5],
-  ['ETH', 'ELF', 1, 0.5],
+  ['ETH', 'XRP', 1, 0.1],
+  // ['ETH', 'EOS', 0.1, -2],
+  // ['ETH', 'QKC', 0.1, -2],
+  // ['ETH', 'EDO', 0.1, -2],
+  // ['ETH', 'ADA', 0.1, 0.5],
+  // ['ETH', 'ZRX', 0.1, 0.5],
+  // ['ETH', 'PPT', 0.1, 0.5],
+  // ['ETH', 'NEO', 0.1, 0.5],
+  // ['ETH', 'HOT', 0.1, 0.5],
+  // ['ETH', 'ICX', 0.1, 0.5],
+  // ['ETH', 'POWR', 0.1, 0.5],
+  // ['ETH', 'STRAT', 0.1, 0.5],
+  // ['ETH', 'WAVES', 0.1, 0.5],
+  // ['ETH', 'AION', 0.1, 0.5],
+  // ['ETH', 'ARK', 0.1, 0.5],
+  // ['ETH', 'BQX', 0.1, 0.5],
+  // ['ETH', 'DASH', 0.1, 0.5],
+  // ['ETH', 'ELF', 0.1, 0.5],
 ];
 const sockets = [];
 
 const arbitrageStraight = (prices, pairs) => {
   const quantity = pairs[3];
   const asks1 = prices[pairs[0]]['asks'];
-  const asks2 = prices[pairs[1]]['asks'];
-  const asks3 = prices[pairs[2]]['asks'];
-  const bids1 = prices[pairs[0]]['bids'];
   const bids2 = prices[pairs[1]]['bids'];
   const bids3 = prices[pairs[2]]['bids'];
 
   // first step
   let sum = 0, sumAmount = 0, assetVol = null, avgPrice = null;
+  let volBTC = null;
   for (const key in asks1) {
     const tempMainCoinVol = key * asks1[key];
     if (tempMainCoinVol + sum > quantity) {
@@ -46,7 +44,7 @@ const arbitrageStraight = (prices, pairs) => {
       assetVol = sumAmount + temp;
       sumAmount += asks1[key];
       avgPrice = 1 / (assetVol / quantity);
-      const volBTC = sumAmount * avgPrice;
+      volBTC = sumAmount * avgPrice;
       console.log('AvgPrice: ' + avgPrice);
       console.log('XRP_vol_btc: ' + volBTC);
       console.log('XRP_volume: ' + sumAmount);
@@ -106,17 +104,6 @@ const arbitrageStraight = (prices, pairs) => {
   }
 
 
-  // const ask1 = prices[pairs[0]][0];
-  // const bid1 = prices[pairs[0]][1];
-  // const bid2 = prices[pairs[1]][1];
-  // const bid3 = prices[pairs[2]][1];
-  // const volAsk1 = prices[pairs[0]][2];
-  // const volBid2 = prices[pairs[1]][3];
-  // const volBid3 = prices[pairs[2]][3];
-  //
-  // const xrpQuant = quantity / ask1;
-  // const ethQuant = xrpQuant * bid2;
-  // const btcQuant = ethQuant * bid3;
   const profit = ((amountBTC - quantity) / quantity)  * 100;
   console.log(pairs.toString() + ' ' + profit);
   return {
@@ -137,37 +124,96 @@ const arbitrageStraight = (prices, pairs) => {
   };
 };
 
-const arbitrageBackward = (prices, pairs) => {
-  const quantity = pairs[3];
-  const ask2 = prices[pairs[1]][0];
-  const ask3 = prices[pairs[2]][0];
-  const bid1 = prices[pairs[0]][1];
-  const volAsk2 = prices[pairs[1]][2];
-  const volAsk3 = prices[pairs[2]][2];
-  const volBid1 = prices[pairs[0]][3];
-
-  const ethQuant = quantity / ask3;
-  const xrpQuant = ethQuant / ask2;
-  const btcQuant = xrpQuant * bid1;
-  const profit = ((btcQuant - quantity) / quantity)  * 100;
-  console.log(pairs.toString() + ' ' + profit);
-  return {
-    'arb_pair': pairs[2].slice(0, -mainCoin.length),
-    'arb_asset': pairs[0].slice(0, -mainCoin.length),
-    'order1_price': ask3,
-    'order1_volume': volAsk3,
-    'order1_volume_btc': ask3 * volAsk3,
-    'order2_price': ask2,
-    'order2_volume': volAsk2,
-    'order2_volume_btc': volAsk2 * bid1,
-    'order3_price': bid1,
-    'order3_volume': volBid1,
-    'order3_volume_btc': bid1 * volBid1,
-    'pattern_type': 2,
-    'timestamp': Math.floor(Date.now() / 1000),
-    profit
-  };
-};
+// const arbitrageBackward = (prices, pairs) => {
+//   const quantity = pairs[3];
+//   const asks1 = prices[pairs[0]]['asks'];
+//   const asks2 = prices[pairs[1]]['asks'];
+//   const asks3 = prices[pairs[2]]['asks'];
+//   const bids1 = prices[pairs[0]]['bids'];
+//   const bids2 = prices[pairs[1]]['bids'];
+//   const bids3 = prices[pairs[2]]['bids'];
+//
+//   // first step
+//   let sum = 0, sumAmount = 0, assetVol = null, avgPrice = null;
+//   let volBTC = null;
+//   for (const key in asks3) {
+//     const tempMainCoinVol = key * asks3[key];
+//     if (tempMainCoinVol + sum > quantity) {
+//       const lambda = quantity - sum;
+//       const temp = lambda / key;
+//       assetVol = sumAmount + temp;
+//       sumAmount += asks3[key];
+//       avgPrice = 1 / (assetVol / quantity);
+//       volBTC = sumAmount * avgPrice;
+//       console.log('AvgPrice: ' + avgPrice);
+//       console.log('ETH_vol_btc: ' + volBTC);
+//       console.log('ETH_volume: ' + sumAmount);
+//       console.log('Реальное количество ETH: ' + assetVol);
+//       break;
+//     } else {
+//       sum += tempMainCoinVol;
+//       sumAmount += asks3[key];
+//     }
+//   }
+//
+//   // second step
+//   let sum2 = 0, sumAmount2 = 0, assetVol2 = null, avgPrice2 = null;
+//   for (const key in asks2) {
+//     const tempMainCoinVol = key * asks2[key];
+//     if (tempMainCoinVol + sum2 > assetVol) {
+//       const lambda = assetVol - sum2;
+//       const temp = lambda / key;
+//       assetVol2 = sumAmount2 + temp;
+//       sumAmount2 += asks2[key];
+//       avgPrice2 = 1 / (assetVol2 / assetVol);
+//       const volBTC = sumAmount2 * avgPrice2;
+//       console.log('AvgPrice: ' + avgPrice2);
+//       console.log('ETH_vol_btc: ' + volBTC);
+//       console.log('ETH_volume: ' + sumAmount2);
+//       console.log('Реальное количество ETH: ' + assetVol2);
+//       break;
+//     } else {
+//       sum2 += tempMainCoinVol;
+//       sumAmount2 += asks2[key];
+//     }
+//   }
+//
+//   // third step
+//   let assetAmount = 0, amountBTC = 0, fakeAmountBTC = 0, avgPrice3 = null;
+//   for (const key in bids2) {
+//     if (assetAmount + bids2[key] >= assetVol2) {
+//       const lambda = assetVol2 - assetAmount;
+//       fakeAmountBTC = amountBTC;
+//       fakeAmountBTC += key * bids2[key];
+//       amountBTC += key * lambda;
+//       avgPrice3 = amountBTC / assetVol2;
+//       console.log('Avg Price: ' + avgPrice3);
+//       console.log('ETH amount: ' + amountBTC);
+//       console.log('Fake ETH amount: ' + fakeAmountBTC);
+//       break;
+//     }
+//     amountBTC += key * bids2[key];
+//     assetAmount += bids2[key];
+//   }
+//   const profit = ((amountBTC - quantity) / quantity)  * 100;
+//   console.log(pairs.toString() + ' ' + profit);
+//   return {
+//     'arb_pair': pairs[2].slice(0, -mainCoin.length),
+//     'arb_asset': pairs[0].slice(0, -mainCoin.length),
+//     'order1_price': avgPrice,
+//     'order1_volume': sumAmount,
+//     'order1_volume_btc': volBTC,
+//     'order2_price': avgPrice2,
+//     'order2_volume': sumAmount2,
+//     'order2_volume_btc': volAsk2 * bid1,
+//     'order3_price': bid1,
+//     'order3_volume': volBid1,
+//     'order3_volume_btc': bid1 * volBid1,
+//     'pattern_type': 2,
+//     'timestamp': Math.floor(Date.now() / 1000),
+//     profit
+//   };
+// };
 
 const allIsReady = last => {
   for (const i in last) {
@@ -220,13 +266,14 @@ const callback = (pairs, pos) => {
       return;
 
     const straight = arbitrageStraight(last, pairs);
-    const backward = arbitrageBackward(last, pairs);
+    // const backward = arbitrageBackward(last, pairs);
     console.log('STRAIGHT: ' + straight);
-    // if (straight['profit'] >= pairs[4]) {
-    //   const msg = '-----WOW WRITING NOW TO DATABASE----- ';
-    //   console.log(msg + straight['profit'] + pairs.toString());
-    //   sendRes(straight);
-    // }
+    console.log('PAIRS: ' + pairs[4]);
+    if (straight['profit'] - 0.225 >= pairs[4]) {
+      const msg = '-----WOW WRITING NOW TO DATABASE----- ';
+      console.log(msg + straight['profit'] + pairs.toString());
+      sendRes(straight);
+    }
     // if (backward['profit'] >= pairs[4]) {
     //   const msg = '-----WOW WRITING NOW TO DATABASE----- ';
     //   console.log(msg + straight['profit'] + pairs.toString());
