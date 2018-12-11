@@ -59,16 +59,35 @@ const arbitrageStraight = (prices, pairs) => {
   }
 
   // second step
-  let amountETH = 0;
-  let price = 0;
+  let assetAmount = 0, amountETH = 0, fakeAmountETH = 0;
   for (const key in bids2) {
-    if (amountETH + bids2[key] >= assetVol) {
-      const lambda = assetVol - amountETH;
-      price += key * lambda;
+    if (assetAmount + bids2[key] >= assetVol) {
+      const lambda = assetVol - assetAmount;
+      fakeAmountETH = amountETH;
+      fakeAmountETH += key * bids2[key];
+      amountETH += key * lambda;
+      console.log('ETH amount: ' + amountETH);
+      console.log('Fake ETH amount: ' + fakeAmountETH);
       break;
     }
-    price += key * bids2[key];
-    amountETH += bids2[key];
+    amountETH += key * bids2[key];
+    assetAmount += bids2[key];
+  }
+
+  // third step
+  let assetAmount2 = 0, amountBTC = 0, fakeAmountBTC = 0;
+  for (const key in bids3) {
+    if (assetAmount2 + bids3[key] >= amountETH) {
+      const lambda = amountETH - assetAmount2;
+      fakeAmountBTC = amountBTC;
+      fakeAmountBTC += key * bids3[key];
+      amountBTC += key * lambda;
+      console.log('BTC amount: ' + amountBTC);
+      console.log('Fake BTC amount: ' + fakeAmountBTC);
+      break;
+    }
+    amountBTC += key * bids3[key];
+    assetAmount2 += bids3[key];
   }
 
 
