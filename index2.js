@@ -101,7 +101,7 @@ const arbitrageStraight = (prices, pairs) => {
     amountBTC2 += key * bids3[key];
     assetAmount3 += bids3[key];
   }
-  console.log('\n')
+  console.log('\n');
 
 
   const profit = ((amountBTC - quantity) / quantity)  * 100;
