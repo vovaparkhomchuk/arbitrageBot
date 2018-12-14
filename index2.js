@@ -6,24 +6,24 @@ const mysql = require('mysql');
 
 const mainCoin = 'BTC';
 const coins = [
-  ['ETH', 'XRP', 0.05, 0.1],
-  // ['ETH', 'EOS', 0.1, -2],
-  // ['ETH', 'QKC', 0.1, -2],
-  // ['ETH', 'EDO', 0.1, -2],
-  // ['ETH', 'ADA', 0.1, 0.5],
-  // ['ETH', 'ZRX', 0.1, 0.5],
-  // ['ETH', 'PPT', 0.1, 0.5],
-  // ['ETH', 'NEO', 0.1, 0.5],
-  // ['ETH', 'HOT', 0.1, 0.5],
-  // ['ETH', 'ICX', 0.1, 0.5],
-  // ['ETH', 'POWR', 0.1, 0.5],
-  // ['ETH', 'STRAT', 0.1, 0.5],
-  // ['ETH', 'WAVES', 0.1, 0.5],
-  // ['ETH', 'AION', 0.1, 0.5],
-  // ['ETH', 'ARK', 0.1, 0.5],
-  // ['ETH', 'BQX', 0.1, 0.5],
-  // ['ETH', 'DASH', 0.1, 0.5],
-  // ['ETH', 'ELF', 0.1, 0.5],
+  ['ETH', 'XRP', 0.1, 0.5],
+  ['ETH', 'EOS', 0.1, 0.5],
+  ['ETH', 'QKC', 0.1, 0.5],
+  ['ETH', 'EDO', 0.1, 0.5],
+  ['ETH', 'ADA', 0.1, 0.5],
+  ['ETH', 'ZRX', 0.1, 0.5],
+  ['ETH', 'PPT', 0.1, 0.5],
+  ['ETH', 'NEO', 0.1, 0.5],
+  ['ETH', 'HOT', 0.1, 0.5],
+  ['ETH', 'ICX', 0.1, 0.5],
+  ['ETH', 'POWR', 0.1, 0.5],
+  ['ETH', 'STRAT', 0.1, 0.5],
+  ['ETH', 'WAVES', 0.1, 0.5],
+  ['ETH', 'AION', 0.1, 0.5],
+  ['ETH', 'ARK', 0.1, 0.5],
+  ['ETH', 'BQX', 0.1, 0.5],
+  ['ETH', 'DASH', 0.1, 0.5],
+  ['ETH', 'ELF', 0.1, 0.5],
 ];
 const sockets = [];
 
@@ -45,10 +45,10 @@ const arbitrageStraight = (prices, pairs) => {
       sumAmount += asks1[key];
       avgPrice = 1 / (assetVol / quantity);
       volBTC = sumAmount * avgPrice;
-      console.log('AvgPrice: ' + avgPrice);
-      console.log('XRP_vol_btc: ' + volBTC);
-      console.log('XRP_volume: ' + sumAmount);
-      console.log('Реальное количество XRP: ' + assetVol);
+      // console.log('AvgPrice: ' + avgPrice);
+      // console.log('XRP_vol_btc: ' + volBTC);
+      // console.log('XRP_volume: ' + sumAmount);
+      // console.log('Реальное количество XRP: ' + assetVol);
       break;
     } else {
       sum += tempMainCoinVol;
@@ -64,9 +64,9 @@ const arbitrageStraight = (prices, pairs) => {
       fakeAmountETH += key * bids2[key];
       amountETH += key * lambda;
       avgPrice2 = amountETH / assetVol;
-      console.log('Avg Price: ' + avgPrice2);
-      console.log('ETH amount: ' + amountETH);
-      console.log('Fake ETH amount: ' + fakeAmountETH);
+      // console.log('Avg Price: ' + avgPrice2);
+      // console.log('ETH amount: ' + amountETH);
+      // console.log('Fake ETH amount: ' + fakeAmountETH);
       break;
     }
     amountETH += key * bids2[key];
@@ -82,9 +82,9 @@ const arbitrageStraight = (prices, pairs) => {
       fakeAmountBTC += key * bids3[key];
       amountBTC += key * lambda;
       avgPrice3 = amountBTC / amountETH;
-      console.log('Avg price' + avgPrice3);
-      console.log('BTC amount: ' + amountBTC);
-      console.log('Fake BTC amount: ' + fakeAmountBTC);
+      // console.log('Avg price' + avgPrice3);
+      // console.log('BTC amount: ' + amountBTC);
+      // console.log('Fake BTC amount: ' + fakeAmountBTC);
       break;
     }
     amountBTC += key * bids3[key];
@@ -95,7 +95,7 @@ const arbitrageStraight = (prices, pairs) => {
     if (assetAmount3 + bids3[key] >= fakeAmountETH) {
       const lambda = fakeAmountETH - assetAmount3;
       amountBTC2 += key * lambda;
-      console.log('BTC amount: ' + amountBTC2);
+      // console.log('BTC amount: ' + amountBTC2);
       break;
     }
     amountBTC2 += key * bids3[key];
