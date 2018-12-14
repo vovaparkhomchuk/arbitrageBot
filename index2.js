@@ -6,7 +6,7 @@ const mysql = require('mysql');
 
 const mainCoin = 'BTC';
 const coins = [
-  ['ETH', 'XRP', 1, 0.1],
+  ['ETH', 'XRP', 0.05, 0.1],
   // ['ETH', 'EOS', 0.1, -2],
   // ['ETH', 'QKC', 0.1, -2],
   // ['ETH', 'EDO', 0.1, -2],
@@ -101,11 +101,9 @@ const arbitrageStraight = (prices, pairs) => {
     amountBTC2 += key * bids3[key];
     assetAmount3 += bids3[key];
   }
-  console.log('\n')
-
 
   const profit = ((amountBTC - quantity) / quantity)  * 100;
-  console.log(pairs.toString() + ' ' + profit);
+  console.log(pairs.toString() + ' ' + profit + '\n');
   return {
     'arb_pair': pairs[2].slice(0, -mainCoin.length),
     'arb_asset': pairs[0].slice(0, -mainCoin.length),
@@ -267,8 +265,7 @@ const callback = (pairs, pos) => {
 
     const straight = arbitrageStraight(last, pairs);
     // const backward = arbitrageBackward(last, pairs);
-    console.log('STRAIGHT: ' + straight);
-    console.log('PAIRS: ' + pairs[4]);
+    console.log({ straight });
     if (straight['profit'] - 0.225 >= pairs[4]) {
       const msg = '-----WOW WRITING NOW TO DATABASE----- ';
       console.log(msg + straight['profit'] + pairs.toString());
